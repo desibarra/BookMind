@@ -7,6 +7,7 @@ export interface BookData {
   type: string;
   purpose: string;
   audience: string;
+  // FIX: Allow tone to be a string or an array of strings for multi-card selection.
   tone: string | string[];
   language: string;
   structure: string;

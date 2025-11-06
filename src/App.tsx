@@ -15,7 +15,7 @@ const initialBookData: BookData = {
   type: '',
   purpose: '',
   audience: '',
-  tone: [],
+  tone: '',
   language: 'English',
   structure: '',
   finalDetails: {
@@ -36,7 +36,6 @@ const App: React.FC = () => {
   const [bookData, setBookData] = useState<BookData>(initialBookData);
   const [isLoading, setIsLoading] = useState<string | null>(null);
   const [generatedContent, setGeneratedContent] = useState<string>('');
-  const [coverImage, setCoverImage] = useState<string | null>(null);
   const [isEditingIndex, setIsEditingIndex] = useState(false);
 
   useEffect(() => {
@@ -69,6 +68,7 @@ const App: React.FC = () => {
     document.documentElement.classList.add(theme);
   }, [theme]);
 
+  // FIX: Update function signature for stricter type safety, excluding non-updatable fields.
   const handleUpdateData = (key: keyof Omit<BookData, 'finalDetails' | 'plan'>, value: string | string[]) => {
     setBookData(prev => ({ ...prev, [key]: value }));
   };
@@ -86,7 +86,7 @@ const App: React.FC = () => {
     if (currentStepConfig.type === 'chapter-editor') return true;
     if (currentStepConfig.type === 'final-customization') return true;
     
-    const value = bookData[currentStepConfig.key as keyof Omit<BookData, 'plan'>];
+    const value = bookData[currentStepConfig.key as keyof Omit<BookData, 'plan' | 'finalDetails'>];
     if (Array.isArray(value)) return value.length > 0;
     if (typeof value === 'string') return value.trim() !== '';
     return !!value;
@@ -120,9 +120,8 @@ const App: React.FC = () => {
   
   const handleGenerateBook = async () => {
     setIsLoading('book');
-    const { content, coverImage } = await generateBookContent(bookData);
+    const content = await generateBookContent(bookData, t);
     setGeneratedContent(content);
-    setCoverImage(coverImage);
     setIsLoading(null);
   }
 
@@ -130,17 +129,7 @@ const App: React.FC = () => {
     setBookData(initialBookData);
     setCurrentStep(0);
     setGeneratedContent('');
-    setCoverImage(null);
     setIsEditingIndex(false);
-  };
-
-  const handleEdit = () => {
-    const chapterEditorStepIndex = STEPS_CONFIG.findIndex(s => s.type === 'chapter-editor');
-    if (chapterEditorStepIndex !== -1) {
-        setGeneratedContent('');
-        setCoverImage(null);
-        setCurrentStep(chapterEditorStepIndex);
-    }
   };
 
   const renderCurrentStep = () => {
@@ -159,25 +148,30 @@ const App: React.FC = () => {
             className="w-full p-4 bg-white/50 dark:bg-gray-blue/50 border-2 border-gray-blue/20 dark:border-cream/20 rounded-lg focus:ring-2 focus:ring-gold focus:border-gold outline-none transition-all text-lg text-gray-blue dark:text-cream"
             placeholder={placeholder ? t(placeholder) : ''}
             value={value as string || ''}
-            onChange={(e) => handleUpdateData(key as keyof Omit<BookData, 'plan' | 'finalDetails'>, e.target.value)}
+            // FIX: Cast key to satisfy the stricter handleUpdateData signature.
+            onChange={(e) => handleUpdateData(key as keyof Omit<BookData, 'finalDetails' | 'plan'>, e.target.value)}
           />
         )}
         {(type === 'single-card' || type === 'multi-card') && options && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {options.map(opt => {
+              // FIX: Use Array.isArray for type-safe checking instead of unsafe casting.
               const isSelected = type === 'single-card' 
                 ? value === opt.value 
                 : Array.isArray(value) && value.includes(opt.value);
               
               const handleClick = () => {
                 if (type === 'single-card') {
-                  handleUpdateData(key as keyof Omit<BookData, 'plan' | 'finalDetails'>, opt.value);
+                  // FIX: Cast key to satisfy the stricter handleUpdateData signature.
+                  handleUpdateData(key as keyof Omit<BookData, 'finalDetails' | 'plan'>, opt.value);
                 } else {
+                  // FIX: Use Array.isArray for type-safe checking instead of unsafe casting.
                   const currentValues = Array.isArray(value) ? value : [];
                   const newValues = isSelected 
                     ? currentValues.filter(v => v !== opt.value)
                     : [...currentValues, opt.value];
-                  handleUpdateData(key as keyof Omit<BookData, 'plan' | 'finalDetails'>, newValues);
+                  // FIX: Cast key to satisfy the stricter handleUpdateData signature.
+                  handleUpdateData(key as keyof Omit<BookData, 'finalDetails' | 'plan'>, newValues);
                 }
               };
 
@@ -275,7 +269,7 @@ const App: React.FC = () => {
       <div className="min-h-screen bg-cream dark:bg-gray-blue text-gray-blue dark:text-cream font-sans transition-colors duration-300">
         <Header theme={theme} setTheme={setTheme} language={language} setLanguage={setLanguage} />
         <main className="pt-24 pb-16">
-          <FinalScreen bookData={bookData} generatedContent={generatedContent} coverImage={coverImage} onRestart={handleRestart} onEdit={handleEdit} t={t} />
+          <FinalScreen bookData={bookData} generatedContent={generatedContent} onRestart={handleRestart} t={t} />
         </main>
       </div>
     );
