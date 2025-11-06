@@ -1,3 +1,4 @@
+
 {
   "welcomeTitle": "Welcome to",
   "welcomeSubtitle": "Turn your ideas, knowledge, or stories into a publishable book.",
@@ -73,8 +74,22 @@
   "step6_opt3_desc": "Elegant and sophisticated",
   "step6_opt4_label": "German",
   "step6_opt4_desc": "Precise and technical",
-  "step7_label": "Describe the desired structure or table of contents.",
-  "step8_label": "Add any customization details.",
+  "step7_title": "Your Book Structure",
+  "step7_subtitle": "We've created a personalized outline for you. You can edit it below.",
+  "step7_edit_button": "Edit Index",
+  "step7_save_button": "Save Changes",
+  "step7_continue_button": "Continue",
+  "step8_title": "Would you like to add anything else?",
+  "step8_subtitle": "Personalize the final details of your book (optional)",
+  "step8_dedication_label": "Dedication",
+  "step8_dedication_placeholder": "To whom do you dedicate this book?",
+  "step8_quotes_label": "Favorite Quotes",
+  "step8_quotes_placeholder": "Quotes or phrases to include…",
+  "step8_author_label": "Author Name",
+  "step8_author_placeholder": "Your full name",
+  "step8_cover_label": "AI Cover",
+  "step8_cover_placeholder": "Describe how you want your book cover to look…",
+  "step8_generate_button": "Generate my book →",
   "step9_label": "Choose your plan to continue",
   "step10_label": "Your book is ready!",
   "generating_title": "Bringing your story to life...",
@@ -84,6 +99,13 @@
     "📖 Shaping the chapters...",
     "🔍 Polishing the final details...",
     "🎉 It's almost ready!"
+  ],
+  "generating_outline_title": "Creating your outline...",
+  "generating_outline_messages": [
+    "🧠 Analyzing your idea...",
+    "🏗️ Building the foundation...",
+    "📜 Drafting chapter titles...",
+    "💡 Finalizing the structure..."
   ],
   "plan_free_title": "Free",
   "plan_free_desc": "First chapter",

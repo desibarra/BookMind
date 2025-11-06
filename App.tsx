@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { StepProgress } from './components/StepProgress';
 import { STEPS_CONFIG } from './constants';
 import { Plan, BookData } from './types';
-import { generateBookContent } from './services/geminiService';
+import { generateBookContent, generateBookOutline } from './services/geminiService';
 import { exportAsPdf, exportAsTxt, exportAsZip } from './services/exportService';
 
 const useLocalStorage = <T,>(key: string, initialValue: T): [T, React.Dispatch<React.SetStateAction<T>>] => {
@@ -31,7 +32,9 @@ const useLocalStorage = <T,>(key: string, initialValue: T): [T, React.Dispatch<R
 };
 
 const initialBookData: BookData = {
-  topic: '', type: '', purpose: '', audience: '', tone: '', language: 'English', structure: '', customization: '', plan: 'Free',
+  topic: '', title: '', type: '', purpose: '', audience: '', tone: '', language: 'English', structure: '', 
+  finalDetails: { dedication: '', quotes: '', author: '', cover: '' }, 
+  plan: 'Free',
 };
 
 const App: React.FC = () => {
@@ -50,6 +53,12 @@ const App: React.FC = () => {
     const savedTones = bookData.tone;
     return savedTones ? savedTones.split(', ') : [];
   });
+
+  // State for Chapter Editor
+  const [isEditingIndex, setIsEditingIndex] = useState(false);
+  const [editableChapters, setEditableChapters] = useState<string[]>([]);
+  const [isGeneratingOutline, setIsGeneratingOutline] = useState(false);
+
 
   useEffect(() => {
     const fetchTranslations = async () => {
@@ -83,13 +92,23 @@ const App: React.FC = () => {
   }, [theme]);
   
   const handleNext = () => {
-    if (currentStep < STEPS_CONFIG.length + 2) { 
+    if (currentStep < STEPS_CONFIG.length + 1) { 
       setCurrentStep(currentStep + 1);
     }
   };
 
-  const handleDataChange = (key: keyof Omit<BookData, 'plan'>, value: string) => {
+  const handleDataChange = (key: keyof Omit<BookData, 'plan' | 'finalDetails'>, value: string) => {
     setBookData(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleFinalDetailsChange = (field: keyof BookData['finalDetails'], value: string) => {
+    setBookData(prev => ({
+        ...prev,
+        finalDetails: {
+            ...prev.finalDetails,
+            [field]: value
+        }
+    }));
   };
   
   const handleToneToggle = (tone: string) => {
@@ -123,14 +142,37 @@ const App: React.FC = () => {
   };
   
   useEffect(() => {
-      if(currentStep === STEPS_CONFIG.length + 1 && !generatedContent && !isLoading) { // Generation starts on step after config
+      if(currentStep === STEPS_CONFIG.length + 2 && !generatedContent && !isLoading) {
           handleGenerate();
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentStep, generatedContent, isLoading]);
 
+  // Effect for Chapter Editor Step
+  useEffect(() => {
+    const chapterEditorStepIndex = STEPS_CONFIG.findIndex(s => s.type === 'chapter-editor') + 1;
+    if (currentStep === chapterEditorStepIndex && !bookData.structure && !isGeneratingOutline) {
+      const generateOutline = async () => {
+        setIsGeneratingOutline(true);
+        const messages = t('generating_outline_messages');
+        let messageIndex = 0;
+
+        const interval = setInterval(() => {
+          setLoadingMessage(messages[messageIndex % messages.length]);
+          messageIndex++;
+        }, 2000);
+
+        const { title, structure } = await generateBookOutline(bookData);
+        clearInterval(interval);
+        setBookData(prev => ({...prev, title, structure}));
+        setIsGeneratingOutline(false);
+      };
+      generateOutline();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStep, bookData.structure, isGeneratingOutline]);
+
   const renderStepContent = () => {
-    // Welcome step (currentStep === 0)
     if (currentStep === 0) {
         return (
             <div className="w-full max-w-2xl text-center animate-fade-in">
@@ -151,10 +193,9 @@ const App: React.FC = () => {
         );
     }
     
-    // Config steps (currentStep 1 to 8)
     if (currentStep > 0 && currentStep <= STEPS_CONFIG.length) {
       const stepConfig = STEPS_CONFIG[currentStep - 1];
-      const value = bookData[stepConfig.key];
+      const value = bookData[stepConfig.key as keyof Omit<BookData, 'plan' | 'finalDetails'>];
       
       if (stepConfig.type === 'single-card' || stepConfig.type === 'multi-card') {
         return (
@@ -168,7 +209,7 @@ const App: React.FC = () => {
 
                 const handleClick = () => {
                   if (stepConfig.type === 'single-card') {
-                    handleDataChange(stepConfig.key, option.value);
+                    handleDataChange(stepConfig.key as keyof Omit<BookData, 'plan' | 'finalDetails'>, option.value);
                     setTimeout(() => handleNext(), 250); 
                   } else {
                     handleToneToggle(option.value);
@@ -194,14 +235,110 @@ const App: React.FC = () => {
         );
       }
       
+      if (stepConfig.type === 'chapter-editor') {
+        if (isGeneratingOutline) {
+          return (
+            <div className="text-center">
+              <h2 className="font-serif text-3xl md:text-4xl mb-4 text-gray-blue dark:text-cream">{t('generating_outline_title')}</h2>
+              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-gold mx-auto mb-4"></div>
+              <p className="text-lg text-gray-blue/80 dark:text-cream/80">{loadingMessage}</p>
+            </div>
+          )
+        }
+        
+        const handleEditClick = () => {
+          setEditableChapters(bookData.structure.split('\n'));
+          setIsEditingIndex(true);
+        };
+
+        const handleSaveClick = () => {
+          handleDataChange('structure', editableChapters.join('\n'));
+          setIsEditingIndex(false);
+        };
+        
+        const handleChapterChange = (index: number, newText: string) => {
+          const updatedChapters = [...editableChapters];
+          updatedChapters[index] = newText;
+          setEditableChapters(updatedChapters);
+        };
+
+        return (
+          <div className="w-full max-w-2xl text-center">
+            <h2 className="font-serif text-3xl md:text-4xl mb-2 text-gray-blue dark:text-cream">{t(stepConfig.labelKey)}</h2>
+            <p className="text-gray-blue/70 dark:text-cream/70 mb-8">{t('step7_subtitle')}</p>
+            
+            <div className="bg-white/50 dark:bg-gray-blue/50 p-6 rounded-lg shadow-inner mb-6 border border-gold/30 text-left">
+              <h3 className="font-serif text-2xl font-bold mb-4 text-gray-blue dark:text-gold">{bookData.title}</h3>
+              <ul className="space-y-2">
+                {(isEditingIndex ? editableChapters : bookData.structure.split('\n')).map((chapter, index) => (
+                  <li key={index} className="flex items-center">
+                    {isEditingIndex ? (
+                      <input
+                        type="text"
+                        value={chapter}
+                        onChange={(e) => handleChapterChange(index, e.target.value)}
+                        className="w-full p-2 bg-cream/50 dark:bg-gray-blue border-b-2 border-gold/50 focus:border-gold outline-none transition font-sans"
+                      />
+                    ) : (
+                      <p className="p-2 text-gray-blue dark:text-cream/90">{chapter}</p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="flex justify-center gap-4">
+              <button onClick={isEditingIndex ? handleSaveClick : handleEditClick} className="px-8 py-3 bg-white/80 dark:bg-gray-blue/80 border border-gold text-gold font-bold rounded-lg shadow-md hover:bg-gold hover:text-gray-blue transition-all">
+                {isEditingIndex ? t('step7_save_button') : t('step7_edit_button')}
+              </button>
+              <button onClick={handleNext} disabled={isEditingIndex} className="px-8 py-3 bg-gold text-gray-blue font-bold rounded-lg shadow-md hover:bg-gold-dark transition-all disabled:bg-gold/50 disabled:cursor-not-allowed">
+                {t('step7_continue_button')} →
+              </button>
+            </div>
+          </div>
+        );
+      }
+      
+      if (stepConfig.type === 'final-customization') {
+        const fields: { key: keyof BookData['finalDetails']; icon: string }[] = [
+          { key: 'dedication', icon: '❤️' },
+          { key: 'quotes', icon: '“ ”' },
+          { key: 'author', icon: '👤' },
+          { key: 'cover', icon: '🖼️' },
+        ];
+
+        return (
+          <div className="w-full max-w-4xl text-center">
+            <h2 className="font-serif text-3xl md:text-4xl mb-2 text-gray-blue dark:text-cream">{t(stepConfig.labelKey)}</h2>
+            <p className="text-gray-blue/70 dark:text-cream/70 mb-8">{t('step8_subtitle')}</p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {fields.map(({ key, icon }) => (
+                <div key={key} className="bg-white/50 dark:bg-gray-blue/50 p-4 rounded-xl shadow-md flex items-start gap-4">
+                  <span className="text-3xl pt-2 text-gold">{icon}</span>
+                  <div className="w-full text-left">
+                      <label className="font-bold text-gray-blue dark:text-cream">{t(`step8_${key}_label`)}</label>
+                      <textarea
+                          value={bookData.finalDetails[key]}
+                          onChange={(e) => handleFinalDetailsChange(key, e.target.value)}
+                          placeholder={t(`step8_${key}_placeholder`)}
+                          rows={3}
+                          className="w-full mt-1 p-2 bg-cream/50 dark:bg-gray-blue border-b-2 border-gold/50 focus:border-gold outline-none transition font-sans resize-none"
+                      />
+                  </div>
+                </div>
+              ))}
+            </div>
+             <button onClick={handleNext} className="mt-10 px-10 py-3 bg-gold text-gray-blue font-bold rounded-lg shadow-md hover:bg-gold-dark transition-all">
+                {t('step8_generate_button')}
+              </button>
+          </div>
+        );
+      }
+
       return (
         <div className="w-full max-w-xl text-center">
           <label htmlFor="stepInput" className="block font-serif text-2xl md:text-3xl mb-6 text-gray-blue dark:text-cream">{t(stepConfig.labelKey)}</label>
-          {stepConfig.type === 'input' ? (
-            <input id="stepInput" type="text" value={String(value)} onChange={e => handleDataChange(stepConfig.key, e.target.value)} placeholder={stepConfig.placeholder} className="w-full p-4 bg-white/50 dark:bg-gray-blue/50 border border-gold rounded-lg shadow-sm focus:ring-2 focus:ring-gold-dark outline-none transition" />
-          ) : (
-            <textarea id="stepInput" value={String(value)} onChange={e => handleDataChange(stepConfig.key, e.target.value)} placeholder={stepConfig.placeholder} rows={5} className="w-full p-4 bg-white/50 dark:bg-gray-blue/50 border border-gold rounded-lg shadow-sm focus:ring-2 focus:ring-gold-dark outline-none transition" />
-          )}
+          <input id="stepInput" type="text" value={String(value)} onChange={e => handleDataChange(stepConfig.key as keyof Omit<BookData, 'plan' | 'finalDetails'>, e.target.value)} placeholder={t(stepConfig.placeholder || '')} className="w-full p-4 bg-white/50 dark:bg-gray-blue/50 border border-gold rounded-lg shadow-sm focus:ring-2 focus:ring-gold-dark outline-none transition" />
           <button onClick={handleNext} disabled={!value} className="mt-8 px-10 py-3 bg-gold text-gray-blue font-bold rounded-lg shadow-md hover:bg-gold-dark transition-all disabled:bg-gold/50 disabled:cursor-not-allowed">
             {t('next')} →
           </button>
@@ -238,7 +375,7 @@ const App: React.FC = () => {
         )
       }
 
-      const bookTitle = generatedContent.split('\n')[0].replace(/#/g, '').trim() || bookData.topic;
+      const bookTitle = generatedContent.split('\n')[0].replace(/#/g, '').trim() || bookData.title;
 
       return (
         <div className="w-full max-w-4xl text-left">

@@ -1,3 +1,4 @@
+
 import { StepConfig } from './types';
 
 export const STEPS_CONFIG: StepConfig[] = [
@@ -63,10 +64,18 @@ export const STEPS_CONFIG: StepConfig[] = [
     options: [
         { value: 'Spanish', labelKey: 'step6_opt1_label', descriptionKey: 'step6_opt1_desc', icon: '🇪🇸' },
         { value: 'English', labelKey: 'step6_opt2_label', descriptionKey: 'step6_opt2_desc', icon: '🇬🇧' },
-        { value: 'French', labelKey: 'step6_opt3_label', descriptionKey: 'step6_opt3_desc', icon: '🇫🇷' },
+        { value: 'French', labelKey: 'step6_opt3_label', descriptionKey: 'step6__opt3_desc', icon: '🇫🇷' },
         { value: 'German', labelKey: 'step6_opt4_label', descriptionKey: 'step6_opt4_desc', icon: '🇩🇪' },
     ]
   },
-  { key: 'structure', labelKey: 'step7_label', placeholder: 'e.g., Chapter 1: Introduction, Chapter 2: The Core Idea...', type: 'textarea' },
-  { key: 'customization', labelKey: 'step8_label', placeholder: 'e.g., Main character is a detective named Alex, mention the city of Neo-Veridia...', type: 'textarea' },
+  { 
+    key: 'structure', 
+    labelKey: 'step7_title', 
+    type: 'chapter-editor',
+  },
+  { 
+    key: 'finalDetails', 
+    labelKey: 'step8_title',
+    type: 'final-customization' 
+  },
 ];

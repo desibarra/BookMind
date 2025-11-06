@@ -1,14 +1,21 @@
+
 export type Plan = 'Free' | 'Pro' | 'Creator';
 
 export interface BookData {
   topic: string;
+  title: string;
   type: string;
   purpose: string;
   audience: string;
   tone: string;
   language: string;
   structure: string;
-  customization: string;
+  finalDetails: {
+    dedication: string;
+    quotes: string;
+    author: string;
+    cover: string;
+  };
   plan: Plan;
 }
 
@@ -23,6 +30,6 @@ export interface StepConfig {
   key: keyof Omit<BookData, 'plan'>;
   labelKey: string;
   placeholder?: string;
-  type: 'input' | 'textarea' | 'single-card' | 'multi-card';
+  type: 'input' | 'textarea' | 'single-card' | 'multi-card' | 'chapter-editor' | 'final-customization';
   options?: CardOption[];
 }

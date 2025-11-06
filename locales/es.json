@@ -1,3 +1,4 @@
+
 {
   "welcomeTitle": "Bienvenido a",
   "welcomeSubtitle": "Convierte tus ideas, conocimientos o historias en un libro listo para publicar.",
@@ -73,8 +74,22 @@
   "step6_opt3_desc": "Elegante y sofisticado",
   "step6_opt4_label": "Alemán",
   "step6_opt4_desc": "Preciso y técnico",
-  "step7_label": "Describe la estructura o el índice deseado.",
-  "step8_label": "Añade cualquier detalle de personalización.",
+  "step7_title": "Estructura de tu libro",
+  "step7_subtitle": "Hemos creado un índice personalizado para ti. Puedes editarlo a continuación.",
+  "step7_edit_button": "Editar Índice",
+  "step7_save_button": "Guardar Cambios",
+  "step7_continue_button": "Continuar",
+  "step8_title": "¿Quieres agregar algo más?",
+  "step8_subtitle": "Personaliza los detalles finales de tu libro (opcional)",
+  "step8_dedication_label": "Dedicatoria",
+  "step8_dedication_placeholder": "¿A quién dedicas este libro?",
+  "step8_quotes_label": "Frases favoritas",
+  "step8_quotes_placeholder": "Citas o frases que quieres incluir…",
+  "step8_author_label": "Nombre del autor",
+  "step8_author_placeholder": "Tu nombre completo",
+  "step8_cover_label": "Portada con IA",
+  "step8_cover_placeholder": "Describe cómo quieres que sea la portada de tu libro…",
+  "step8_generate_button": "Generar mi libro →",
   "step9_label": "Elige tu plan para continuar",
   "step10_label": "¡Tu libro está listo!",
   "generating_title": "Dando vida a tu historia...",
@@ -84,6 +99,13 @@
     "📖 Dando forma a los capítulos...",
     "🔍 Pulido de los detalles finales...",
     "🎉 ¡Casi está listo!"
+  ],
+  "generating_outline_title": "Creando tu índice...",
+  "generating_outline_messages": [
+    "🧠 Analizando tu idea...",
+    "🏗️ Construyendo los cimientos...",
+    "📜 Redactando los títulos de los capítulos...",
+    "💡 Finalizando la estructura..."
   ],
   "plan_free_title": "Gratis",
   "plan_free_desc": "Primer capítulo",
