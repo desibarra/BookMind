@@ -1,0 +1,5 @@
+{
+  "name": "BookMind.ai",
+  "description": "An application that helps users turn their ideas, knowledge, or stories into a publishable book using AI. It guides users through a 10-step process to define their book, then generates the content, and provides options to download it in various formats.",
+  "requestFramePermissions": []
+}
